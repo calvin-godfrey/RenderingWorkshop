@@ -32,11 +32,11 @@ class Ray:
         """Ray constructor. Parameters:
 
         origin -- Vector3
-        direction -- Vector3 (which becomes normalized)
+        direction -- Vector3
         tmin -- float
         """
         self.origin = origin
-        self.direction = direction.normalize()
+        self.direction = direction
     def __str__(self):
         return f"{self.origin}: {self.direction}"
 
@@ -59,9 +59,9 @@ class Camera:
         focal_length = 1 # Arbitrary constant
         plane_height = 2 * math.tan(vfov * math.pi / 360)
         plane_width = plane_height * aspect_ratio
-        self.horizontal_vec = u * plane_width
-        self.vertical_vec = v * plane_height
-        self.lower_left_corner = self.origin - self.horizontal_vec / 2 - self.vertical_vec / 2 + w * focal_length
+        self.x_vec = u * plane_width
+        self.y_vec = v * plane_height
+        self.lower_left = self.origin - self.x_vec / 2 - self.y_vec / 2 + w * focal_length
 
 
 
@@ -70,7 +70,7 @@ class Camera:
         ray that starts at the camera and goes through that point on the camera's
         projection plane.
         """
-        direction = self.lower_left_corner + x * self.horizontal_vec + y * self.vertical_vec - self.origin
+        direction = self.lower_left + x * self.x_vec + y * self.y_vec - self.origin
         return Ray(self.origin, direction)
 
 class ImageWrapper:
@@ -107,11 +107,11 @@ def main():
     name = "test.png"
     im = Image.new("RGB", (width, height))
     wrapper = ImageWrapper(im, name)
-    camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 60)
+    camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)
     for y in range(height):
         for x in range(width):
             ray = camera.generate_ray(x / width, y / height)
-            t = 0.5 * ray.direction.z + 1
+            t = 0.5 * ray.direction.z + 0.5
             color = t * Vector3(1, 1, 1) + (1 - t) * Vector3(0.5, 0.7, 1) # Linear interpolation
             wrapper.write_pixel(x, y, color)
 
