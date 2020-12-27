@@ -1,44 +1,5 @@
-from PIL import Image
-import numpy as np
+from lib import Vector3, Ray, ImageWrapper
 import math
-
-class Vector3:
-    def __init__(self, x, y, z):
-        self.x, self.y, self.z = x, y, z
-    def __sub__(self, v):
-        return Vector3(self.x-v.x,self.y-v.y,self.z-v.z)
-    def __add__(self, v):
-        return Vector3(self.x+v.x,self.y+v.y,self.z+v.z)
-    def __mul__(self, s): # Multiplication by scalar
-        return Vector3(self.x*s,self.y*s,self.z*s)
-    def __truediv__(self, s):
-        return Vector3(self.x/s,self.y/s,self.z/s)
-    def multiply(self, v): # Component-wise
-        return Vector3(self.x*v.x,self.y*v.y,self.z*v.z)
-    def length(self):
-        return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
-    def normalize(self):
-        return self / self.length()
-    def cross(self, b):
-        return Vector3(self.y*b.z - self.z*b.y, self.z*b.x - self.x*b.z, self.x*b.y - self.y*b.x)
-    __rmul__ = __mul__
-    def __str__(self):
-        return f"({self.x}, {self.y}, {self.z})"
-    def __getitem__(self, key):
-        return [self.x, self.y, self.z][key]
-
-class Ray:
-    def __init__(self, origin, direction):
-        """Ray constructor. Parameters:
-
-        origin -- Vector3
-        direction -- Vector3
-        tmin -- float
-        """
-        self.origin = origin
-        self.direction = direction
-    def __str__(self):
-        return f"{self.origin}: {self.direction}"
 
 class Camera:
     def __init__(self, location, to, up, aspect_ratio, vfov):
@@ -73,49 +34,55 @@ class Camera:
         direction = self.lower_left + x * self.x_vec + y * self.y_vec - self.origin
         return Ray(self.origin, direction)
 
-class ImageWrapper:
-    def __init__(self, image, name):
-        """
-        Contains a Pillow Image and file name
-        """
-        self.image = image
-        self.pixels = image.load()
-        self.name = name
+def solve_quadratic(a, b, c):
+    desc = b * b - 4 * a * c
+    if desc < 0: # No real solution
+        return []
+    if desc == 0: # Single solution
+        return [-b / (2 * a)]
+    else:
+        sqrt_desc = math.sqrt(desc)
+        b_minus = (-b - sqrt_desc) / (2 * a)
+        b_plus = (-b + sqrt_desc) / (2 * a)
+        # Always return smaller solution first
+        return [min(b_minus, b_plus), max(b_minus, b_plus)]
 
-    def save(self):
-        """
-        Save current progress of image
-        """
-        self.image.save(self.name)
-
-    def write_pixel(self, x, y, color):
-        """
-        Writes the given RGB triplet at the given pixel.
-        Assumes that each color component is in [0, 1)
-        """
-        # print(color)
-        r = max(min(int(color[0] * 255), 255), 0) # Clamps in [0, 1)
-        g = max(min(int(color[1]  * 255), 255), 0) # Clamps in [0, 1)
-        b = max(min(int(color[2] * 255), 255), 0) # Clamps in [0, 1)
-        # print(f"{r}, {g}, {b}")
-        self.pixels[x, y] = (r, g, b)
-
+def sphere_intersection(center, radius, ray):
+    diff = ray.origin - center
+    a = ray.direction.dot(ray.direction)
+    b = diff.dot(2 * ray.direction)
+    c = diff.dot(diff) - radius * radius
+    solutions = solve_quadratic(a, b, c)
+    # Because solutions are in increasing order,
+    # we can iterate until we find a positive one
+    for solution in solutions:
+        if solution > 0:
+            return True
+    return False
 
 def main():
-    height = 256
+    aspect_ratio = 1
     width = 256
+    height = int(width / aspect_ratio) # round
     name = "test.png"
-    im = Image.new("RGB", (width, height))
-    wrapper = ImageWrapper(im, name)
+    wrapper = ImageWrapper(name, width, height)
     camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)
+    white = Vector3(1, 1, 1)
+    blue = Vector3(0.5, 0.7, 1)
     for y in range(height):
         for x in range(width):
             ray = camera.generate_ray(x / width, y / height)
-            t = 0.5 * ray.direction.z + 0.5
-            color = t * Vector3(1, 1, 1) + (1 - t) * Vector3(0.5, 0.7, 1) # Linear interpolation
+            sphere_center = Vector3(0, 10, 0)
+            sphere_radius = 5
+            if sphere_intersection(sphere_center, sphere_radius, ray):
+                color = Vector3(1, 0, 0) # red
+            else:
+                t = (ray.direction.z + 1) / 2
+                # background sky color
+                color = t * white + (1 - t) * blue
             wrapper.write_pixel(x, y, color)
 
-        wrapper.save()
+    wrapper.save()
 
 if __name__ == '__main__':
     main()
