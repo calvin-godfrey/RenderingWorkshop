@@ -14,7 +14,7 @@ class Camera:
         """
         w = (to - location).normalize() # vector pointing to target from camera location
         u = w.cross(up).normalize() # points in the left/right direction
-        v = u.cross(w).normalize() # points in the up/down direction
+        v = w.cross(u).normalize() # points in the up/down direction
         # Now w, u, v are all orthogonal vectors
         self.origin = location
         focal_length = 1 # Arbitrary constant
@@ -47,18 +47,52 @@ def solve_quadratic(a, b, c):
         # Always return smaller solution first
         return [min(b_minus, b_plus), max(b_minus, b_plus)]
 
-def sphere_intersection(center, radius, ray):
-    diff = ray.origin - center
-    a = ray.direction.dot(ray.direction)
-    b = diff.dot(2 * ray.direction)
-    c = diff.dot(diff) - radius * radius
-    solutions = solve_quadratic(a, b, c)
-    # Because solutions are in increasing order,
-    # we can iterate until we find a positive one
-    for solution in solutions:
-        if solution > 0:
-            return True
-    return False
+class HitRecord:
+    def __init__(self, point, normal, color, time):
+        self.point = point
+        self.normal = normal # used later
+        self.color = color
+        self.time = time
+
+class Sphere:
+    def __init__(self, center, radius, color):
+        self.center = center
+        self.radius = radius
+        self.color = color
+
+    def intersection(self, ray):
+        diff = ray.origin - self.center
+        a = ray.direction.dot(ray.direction)
+        b = diff.dot(2 * ray.direction)
+        c = diff.dot(diff) - self.radius * self.radius
+        solutions = solve_quadratic(a, b, c)
+        for solution in solutions:
+            if solution > 0:
+                p = ray.at(solution)
+                normal = (p - self.center).normalize()
+                return HitRecord(p, normal, self.color, solution)
+        return None
+
+def get_background(ray):
+    white = Vector3(1, 1, 1)
+    blue = Vector3(0.5, 0.7, 1)
+    t = (ray.direction.z + 1) / 2
+    return t * blue + (1 - t) * white
+
+def get_intersection(ray, spheres):
+    nearest = 1e100 # big number
+    found_record = None
+    for sphere in spheres:
+        record = sphere.intersection(ray)
+        if record is None:
+            continue
+        if record.time < nearest:
+            found_record = record
+            nearest = record.time
+    if found_record == None:
+        # This does simple gradient from earlier
+        return get_background(ray)
+    return found_record.color
 
 def main():
     aspect_ratio = 1
@@ -67,19 +101,12 @@ def main():
     name = "test.png"
     wrapper = ImageWrapper(name, width, height)
     camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)
-    white = Vector3(1, 1, 1)
-    blue = Vector3(0.5, 0.7, 1)
+    spheres = [Sphere(Vector3(0, 10, 0), 5, Vector3(1, 0, 0)),
+               Sphere(Vector3(0, 10, -100), 95, Vector3(0.2, 1, 0.1))]
     for y in range(height):
         for x in range(width):
             ray = camera.generate_ray(x / width, y / height)
-            sphere_center = Vector3(0, 10, 0)
-            sphere_radius = 5
-            if sphere_intersection(sphere_center, sphere_radius, ray):
-                color = Vector3(1, 0, 0) # red
-            else:
-                t = (ray.direction.z + 1) / 2
-                # background sky color
-                color = t * white + (1 - t) * blue
+            color = get_intersection(ray, spheres)
             wrapper.write_pixel(x, y, color)
 
     wrapper.save()
