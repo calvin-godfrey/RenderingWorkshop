@@ -2,7 +2,7 @@ from lib import Vector3, Ray, ImageWrapper
 import math
 
 class Camera:
-    def __init__(self, location, to, up, aspect_ratio, vfov):
+    def __init__(self, loc, to, up, aspect_ratio, vfov):
         """Camera constructor. Parameters:
 
         location -- Vector3
@@ -12,11 +12,11 @@ class Camera:
         These three parameters are used to form an orthogonal basis
         that is then used to generate rays.
         """
-        w = (to - location).normalize() # vector pointing to target from camera location
+        w = (to - loc).normalize() # vector pointing to target from camera location
         u = w.cross(up).normalize() # points in the left/right direction
         v = w.cross(u).normalize() # points in the up/down direction
         # Now w, u, v are all orthogonal vectors
-        self.origin = location
+        self.origin = loc
         focal_length = 1 # Arbitrary constant
         plane_height = 2 * math.tan(vfov * math.pi / 360)
         plane_width = plane_height * aspect_ratio
@@ -96,8 +96,8 @@ def get_intersection(ray, spheres):
 
 def main():
     aspect_ratio = 1
-    width = 256
-    height = int(width / aspect_ratio) # round
+    height = 256
+    width = int(height * aspect_ratio) # round
     name = "test.png"
     wrapper = ImageWrapper(name, width, height)
     camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)

@@ -64,9 +64,12 @@ class ImageWrapper:
         Writes the given RGB triplet at the given pixel.
         Assumes that each color component is in [0, 1)
         """
-        # print(color)
-        r = max(min(int(color[0] * 255), 255), 0) # Clamps in [0, 1)
-        g = max(min(int(color[1] * 255), 255), 0) # Clamps in [0, 1)
-        b = max(min(int(color[2] * 255), 255), 0) # Clamps in [0, 1)
+        gamma = 2.2
+        r = max(min(color[0], 1), 0) # Clamps in [0, 1)
+        g = max(min(color[1], 1), 0) # Clamps in [0, 1)
+        b = max(min(color[2], 1), 0) # Clamps in [0, 1)
+        r = int(round((r ** gamma) * 256))
+        g = int(round((g ** gamma) * 256))
+        b = int(round((b ** gamma) * 256))
         # print(f"{r}, {g}, {b}")
         self.pixels[x, y] = (r, g, b)
