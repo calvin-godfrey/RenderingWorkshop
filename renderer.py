@@ -1,5 +1,7 @@
 from lib import Vector3, Ray, ImageWrapper
-import math
+import math, random
+
+MAX_DEPTH = 20
 
 class Camera:
     def __init__(self, loc, to, up, aspect_ratio, vfov):
@@ -74,12 +76,22 @@ class Sphere:
         return None
 
 def get_background(ray):
+    direction = ray.direction.normalize()
     white = Vector3(1, 1, 1)
     blue = Vector3(0.5, 0.7, 1)
-    t = (ray.direction.z + 1) / 2
+    t = (direction.z + 1) / 2
     return t * blue + (1 - t) * white
 
-def get_intersection(ray, spheres):
+def rand_on_sphere():
+    v = Vector3(2 * random.random() - 1,
+                2 * random.random() - 1,
+                2 * random.random() - 1)
+    return v.normalize()
+    
+
+def get_intersection(ray, spheres, depth):
+    if depth == 0:
+        return Vector3(0, 0, 0) # black
     nearest = 1e100 # big number
     found_record = None
     for sphere in spheres:
@@ -90,9 +102,11 @@ def get_intersection(ray, spheres):
             found_record = record
             nearest = record.time
     if found_record == None:
-        # This does simple gradient from earlier
         return get_background(ray)
-    return found_record.color
+    # generate new ray direction
+    direction = found_record.normal + rand_on_sphere()
+    new_ray = Ray(found_record.point, direction)
+    return found_record.color.multiply(get_intersection(new_ray, spheres, depth - 1))
 
 def main():
     aspect_ratio = 1
@@ -106,7 +120,7 @@ def main():
     for y in range(height):
         for x in range(width):
             ray = camera.generate_ray(x / width, y / height)
-            color = get_intersection(ray, spheres)
+            color = get_intersection(ray, spheres, MAX_DEPTH)
             wrapper.write_pixel(x, y, color)
 
     wrapper.save()
