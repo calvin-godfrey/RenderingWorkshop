@@ -117,13 +117,17 @@ def main():
     camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)
     spheres = [Sphere(Vector3(0, 10, 0), 5, Vector3(1, 0, 0)),
                Sphere(Vector3(0, 10, -100), 95, Vector3(0.2, 1, 0.1))]
+    samples = 50
     for y in range(height):
         for x in range(width):
-            ray = camera.generate_ray(x / width, y / height)
-            color = get_intersection(ray, spheres, MAX_DEPTH)
-            wrapper.write_pixel(x, y, color)
-
-    wrapper.save()
+            final_color = Vector3(0, 0, 0)
+            for sample in range(samples):
+                ray = camera.generate_ray((x + random.random()) / width, (y + random.random()) / height)
+                color = get_intersection(ray, spheres, MAX_DEPTH)
+                final_color += color
+            final_color /= samples
+            wrapper.write_pixel(x, y, final_color)
+        wrapper.save()
 
 if __name__ == '__main__':
     main()
