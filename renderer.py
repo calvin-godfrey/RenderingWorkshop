@@ -50,17 +50,17 @@ def solve_quadratic(a, b, c):
         return [min(b_minus, b_plus), max(b_minus, b_plus)]
 
 class HitRecord:
-    def __init__(self, point, normal, time, mat_index):
+    def __init__(self, point, normal, time, material):
         self.point = point
         self.normal = normal
         self.time = time
-        self.mat_index = mat_index
+        self.material = material
 
 class Sphere:
-    def __init__(self, center, radius, mat_index):
+    def __init__(self, center, radius, material):
         self.center = center
         self.radius = radius
-        self.mat_index = mat_index
+        self.material = material
 
     def intersection(self, ray):
         diff = ray.origin - self.center
@@ -72,7 +72,7 @@ class Sphere:
             if solution > 0:
                 p = ray.at(solution)
                 normal = (p - self.center).normalize()
-                return HitRecord(p, normal, solution, self.mat_index)
+                return HitRecord(p, normal, solution, self.material)
         return None
 
 def get_background(ray):
@@ -104,9 +104,9 @@ def get_intersection(ray, spheres, depth):
     if found_record == None:
         return get_background(ray)
     # generate new ray direction
-    direction = found_record.normal + rand_on_sphere()
+    direction = found_record.material.scatter(found_record, ray)
     new_ray = Ray(found_record.point, direction)
-    curr_color = materials[found_record.mat_index].color
+    curr_color = found_record.material.color
     return curr_color.multiply(get_intersection(new_ray, spheres, depth - 1))
     
 class Lambertian:
@@ -117,17 +117,17 @@ class Lambertian:
         # returns direction for next ray
         return record.normal + rand_on_sphere()
 
-materials = [Lambertian(Vector3(1, 0, 0)), Lambertian(Vector3(0.2, 1, 0.1))]
-
 def main():
     aspect_ratio = 1
     height = 256
     width = int(height * aspect_ratio) # round
     name = "test.png"
     wrapper = ImageWrapper(name, width, height)
+    red = Lambertian(Vector3(1, 0, 0))
+    green = Lambertian(Vector3(0.2, 1, 0.1))
     camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)
-    spheres = [Sphere(Vector3(0, 10, 0), 5, 0),
-               Sphere(Vector3(0, 10, -100), 95, 1)]
+    spheres = [Sphere(Vector3(0, 10, 0), 5, red),
+               Sphere(Vector3(0, 10, -100), 95, green)]
     samples = 50
     for y in range(height):
         for x in range(width):
