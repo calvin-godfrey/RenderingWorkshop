@@ -50,17 +50,17 @@ def solve_quadratic(a, b, c):
         return [min(b_minus, b_plus), max(b_minus, b_plus)]
 
 class HitRecord:
-    def __init__(self, point, normal, color, time):
+    def __init__(self, point, normal, time, mat_index):
         self.point = point
-        self.normal = normal # used later
-        self.color = color
+        self.normal = normal
         self.time = time
+        self.mat_index = mat_index
 
 class Sphere:
-    def __init__(self, center, radius, color):
+    def __init__(self, center, radius, mat_index):
         self.center = center
         self.radius = radius
-        self.color = color
+        self.mat_index = mat_index
 
     def intersection(self, ray):
         diff = ray.origin - self.center
@@ -72,7 +72,7 @@ class Sphere:
             if solution > 0:
                 p = ray.at(solution)
                 normal = (p - self.center).normalize()
-                return HitRecord(p, normal, self.color, solution)
+                return HitRecord(p, normal, solution, self.mat_index)
         return None
 
 def get_background(ray):
@@ -106,7 +106,18 @@ def get_intersection(ray, spheres, depth):
     # generate new ray direction
     direction = found_record.normal + rand_on_sphere()
     new_ray = Ray(found_record.point, direction)
-    return found_record.color.multiply(get_intersection(new_ray, spheres, depth - 1))
+    curr_color = materials[found_record.mat_index].color
+    return curr_color.multiply(get_intersection(new_ray, spheres, depth - 1))
+    
+class Lambertian:
+    def __init__(self, color):
+        self.color = color
+
+    def scatter(self, record, ray):
+        # returns direction for next ray
+        return record.normal + rand_on_sphere()
+
+materials = [Lambertian(Vector3(1, 0, 0)), Lambertian(Vector3(0.2, 1, 0.1))]
 
 def main():
     aspect_ratio = 1
@@ -115,8 +126,8 @@ def main():
     name = "test.png"
     wrapper = ImageWrapper(name, width, height)
     camera = Camera(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1), 1, 90)
-    spheres = [Sphere(Vector3(0, 10, 0), 5, Vector3(1, 0, 0)),
-               Sphere(Vector3(0, 10, -100), 95, Vector3(0.2, 1, 0.1))]
+    spheres = [Sphere(Vector3(0, 10, 0), 5, 0),
+               Sphere(Vector3(0, 10, -100), 95, 1)]
     samples = 50
     for y in range(height):
         for x in range(width):
