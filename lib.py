@@ -73,3 +73,36 @@ class ImageWrapper:
         b = int(round((b ** gamma) * 256))
         # print(f"{r}, {g}, {b}")
         self.pixels[x, y] = (r, g, b)
+
+class Camera:
+    def __init__(self, loc, to, up, aspect_ratio, vfov):
+        """Camera constructor. Parameters:
+
+        location -- Vector3
+
+        direction -- Vector3, location camera is pointed at.
+        up -- direction that points 'up' relative to the camera.
+        These three parameters are used to form an orthogonal basis
+        that is then used to generate rays.
+        """
+        w = (to - loc).normalize() # vector pointing to target from camera location
+        u = w.cross(up).normalize() # points in the left/right direction
+        v = w.cross(u).normalize() # points in the up/down direction
+        # Now w, u, v are all orthogonal vectors
+        self.origin = loc
+        focal_length = 1 # Arbitrary constant
+        plane_height = 2 * math.tan(vfov * math.pi / 360)
+        plane_width = plane_height * aspect_ratio
+        self.x_vec = u * plane_width
+        self.y_vec = v * plane_height
+        self.lower_left = self.origin - self.x_vec / 2 - self.y_vec / 2 + w * focal_length
+
+
+
+    def generate_ray(self, x, y):
+        """This function takes an (x, y) pair (both in [0, 1)) and returns a
+        ray that starts at the camera and goes through that point on the camera's
+        projection plane.
+        """
+        direction = self.lower_left + x * self.x_vec + y * self.y_vec - self.origin
+        return Ray(self.origin, direction)
