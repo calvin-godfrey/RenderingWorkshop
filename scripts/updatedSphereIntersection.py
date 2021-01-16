@@ -9,6 +9,5 @@ class Sphere:
         for solution in solutions:
             if solution > 0: # new code to make HitRecord
                 p = ray.at(solution)
-                normal = (p - self.center).normalize()
-                return HitRecord(p, normal, self.color, solution)
+                return HitRecord(p, self.color, solution)
         return None

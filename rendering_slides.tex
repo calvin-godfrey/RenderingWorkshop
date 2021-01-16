@@ -39,7 +39,7 @@
 \setbeamertemplate{navigation symbols}{}
 
 \title[Ray Tracing] % (optional, use only with long paper titles)
-{3D Rendering with Ray Tracing}
+{3D Rendering with Ray Tracing in Python}
 
 \author{Calvin Godfrey}
 
@@ -71,20 +71,39 @@
 		\item Junior at Virginia Tech
 		\item Began ray tracing in late April
 	\end{itemize}
-	\begin{columns}[T]
-		\begin{column}{0.5\textwidth}
-			\centering
-			\includegraphics[width=\textwidth]{media/person.jpg}
-
-			\textit{Rendered in June; 11 hours}
-		\end{column}
-		\begin{column}{0.5\textwidth}
-			\centering
-			\includegraphics[width=\textwidth]{media/statue.png}
-
-			\textit{Rendered in December; 2.5 hours}
-		\end{column}
-	\end{columns}
+	\only{
+		\begin{columns}[T]
+			\begin{column}{0.5\textwidth}
+				\centering
+				\includegraphics[width=\textwidth]{media/person.jpg}
+	
+				\textit{Rendered in June; 11 hours}
+			\end{column}
+			\begin{column}{0.5\textwidth}
+				\centering
+				\includegraphics[width=\textwidth]{media/cat_sqr.jpg}
+	
+				\textit{Rendered in June; 8.5 hours}
+			\end{column}
+		\end{columns}
+	}<1>
+	\only{
+		\begin{columns}[T]
+			\begin{column}{0.5\textwidth}
+				\centering
+				\includegraphics[width=\textwidth]{media/statue.png}
+	
+				\textit{Rendered in December; 2.5 hours}
+			\end{column}
+			\begin{column}{0.5\textwidth}
+				\centering
+				\includegraphics[width=\textwidth]{media/material_sqr.png}
+	
+				\textit{Rendered in January; 3.5 hours}
+			\end{column}
+		\end{columns}
+	}<2>
+	
 \end{frame}
 
 \section{Intro to Computer Graphics}
@@ -160,8 +179,6 @@ class Ray:
 	\end{itemize}
 \end{frame}
 
-\section{Implementing new Code}
-
 \begin{frame}
 	\frametitle{Camera}
 	\begin{columns}[T]
@@ -178,25 +195,14 @@ class Ray:
 					\draw (0.55, 0) node [right] {$\theta$};
 					\draw[black] (0.526646, -0.304059) arc (-30:30:0.60811858);
 					\draw (3.4, 0) node [right] {$h$};
-					\draw [decorate, decoration={brace,amplitude=5pt,mirror}]
-					(0, -2.3) -- (3.4641, -2.3) node[midway,yshift=-3em] {$d$};
 				\end{tikzpicture}
 			\end{center}
 		\end{column}
 		\begin{column}{0.5\textwidth}
-			\only{
-				\begin{itemize}
-					\item Requires location, view direction (target), and orientation (`up' direction), field of view, and aspect ratio
-					\item Constructor calculates useful information about plane
-				\end{itemize}
-			}<1>
-			\only{
-				\begin{itemize}
-					\item Given \texttt{vfov} of $\theta$ and focal distance $d$, $h=2d\tan\left(\frac\theta2\right)$
-					\item Width of plane is $h$ multiplied by aspect ratio of image
-					\item Constructor also calculates location of bottom-left corner; used in later methods
-				\end{itemize}
-			}<2>
+			\begin{itemize}
+				\item Requires location, view direction (target), and orientation (`up' direction), field of view, and aspect ratio
+				\item Field of view ($\theta$) controls `zoom' of image; higher field of view is more zoomed out
+			\end{itemize}
 		\end{column}
 	\end{columns}
 \end{frame}
@@ -204,53 +210,14 @@ class Ray:
 \begin{frame}[fragile]
 	\frametitle{Camera}
 	\begin{itemize}
-		\item First, find basis vectors for camera
+		\item Constructor takes all that information and stores information about the projected plane
+		\item Contains an additional ray generation method that will be useful later
 	\end{itemize}
-
-	\inputminted[fontsize=\footnotesize]{python}{scripts/cameraConst1.py}
+	\inputminted[fontsize=\small]{python}{scripts/camera.py}
 \end{frame}
 
-\begin{frame}[fragile]
-	\frametitle{Camera}
-	\begin{itemize}
-		\item Then define size of the plane
-	\end{itemize}
+\section{Implementing new Code}
 
-	\inputminted[fontsize=\footnotesize]{python}{scripts/cameraConst2.py}
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{Camera}
-	\begin{itemize}
-		\item Finally, store the lower-left corner of plane
-	\end{itemize}
-
-	\inputminted[fontsize=\footnotesize]{python}{scripts/cameraConst3.py}
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{Camera Ray Generation}
-	\begin{itemize}
-		\item Given $(x, y)\in [0, 1)^2$, return ray going through that point in plane
-	\end{itemize}
-	\only{
-		\begin{center}
-			\begin{tikzpicture}[scale=0.8]
-			\path[draw] (0, 0) -- (10, 0) -- (10, 6) -- (0, 6) -- (0, 0);
-			\node at (0, 0) {\textbullet};
-			\draw (0, 0) node [below left] {Bottom-left corner};
-			\node at (7, 3) {\textbullet};
-			\draw (7, 3) node [below right] {$(x, y)$};
-			\draw[dashed] (7, 0) -- (7, 3) -- (0, 3);
-			\draw[thick,->] (-0.2, 0) -- (-0.2, 6);
-			\draw[thick,->] (0, -0.2) -- (10, -0.2);
-			\end{tikzpicture}
-		\end{center}
-	}<1>
-	\begin{onlyenv}<2>
-		\inputminted{python}{scripts/cameraGen.py}
-	\end{onlyenv}
-\end{frame}
 
 \begin{frame}[fragile]
 	\frametitle{Main Rendering Loop}
@@ -294,7 +261,7 @@ class Ray:
 			\item Equivalent question is intersection between ray at $O-C$ and direction $D$ and sphere centered at origin with radius $R$
 			\begin{itemize}
 				\item Parameterize ray as $(O-C) + tD$; each value of $t$ gives new point $P$ on ray
-				\item $P$ is on sphere if $P^2 = R^2$, or $P^2 - R^2 = 0$.
+				\item $P$ is on sphere if $|P|^2 = R^2$, or $|P|^2 - R^2 = 0$.
 				\item But $P=(O-C) + tD$, giving the following equation:
 			\end{itemize}
 		\end{itemize}
@@ -377,29 +344,6 @@ class Ray:
 	\inputminted{python}{scripts/HitRecord.py}
 \end{frame}
 
-\begin{frame}[fragile,t]
-	\frametitle{Calculate Normal of Sphere}
-	\begin{itemize}
-		\item Normal is unit vector perpendicular to the surface
-		\item For sphere, it's vector from center to point
-	\end{itemize}
-	\only{
-		\begin{center}
-			\begin{tikzpicture}[scale=0.4]
-				\draw (0, 0) circle (4cm);
-				\node at (0, 0) {\textbullet};
-				\draw (0, 0) node [below right] {$O$};
-				\node at (3.464101615, 2) {\textbullet};
-				\draw (3.7541016, 2) node [below left] {$P$};
-				\draw[->] (0, 0) -- (3.4067811, 1.97);
-			\end{tikzpicture}
-		\end{center}
-	}<1>
-	\begin{onlyenv}<2>
-		\inputminted{python}{scripts/sphereNormal.py}
-	\end{onlyenv}
-\end{frame}
-
 \begin{frame}[fragile]
 	\frametitle{Updated Sphere Intersection}
 	\begin{itemize}
@@ -460,9 +404,35 @@ class Ray:
 	\frametitle{Lambertian Material}
 	\begin{itemize}
 		\item Easiest material to simulate is called ''lambertian''; models rough surfaces, looks the same from all angles
-		\item Need to generate new direction for a ray, for lambertian material this is done with generating a unit vector
+		\item Need to generate new direction for a ray, for lambertian material this is done with generating an arbitrary unit vector
 	\end{itemize}
 	\inputminted{python}{scripts/randSphere.py}
+\end{frame}
+
+\begin{frame}[fragile,t]
+	\frametitle{Calculate Normal of Sphere}
+	\begin{itemize}
+		\item Normal is unit vector perpendicular to the surface
+		\item Used in calculate how a ray bounces
+		\item For sphere, normal is vector from center to point
+	\end{itemize}
+	\only{
+		\begin{center}
+			\begin{tikzpicture}[scale=0.4]
+				\draw (0, 0) circle (4cm);
+				\node at (0, 0) {\textbullet};
+				\draw (0, 0) node [below right] {$O$};
+				\node at (3.464101615, 2) {\textbullet};
+				\draw (3.7541016, 2) node [below left] {$P$};
+				\draw[->] (0, 0) -- (3.4067811, 1.97);
+			\end{tikzpicture}
+		\end{center}
+	}<1>
+	\begin{onlyenv}<2>
+		\begin{center}
+			\inputminted{python}{scripts/sphereNormal.py}
+		\end{center}
+	\end{onlyenv}
 \end{frame}
 
 \begin{frame}
@@ -480,6 +450,15 @@ class Ray:
 			\draw[->] (0, 0) -- (0.3794838, 5.845527) node [midway,right] {$\vec{n} + \vec{d}$};
 		\end{tikzpicture}
 	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Updating \texttt{HitRecord} and Sphere Intersection}
+	\begin{itemize}
+		\item We must first update \texttt{HitRecord} to store the normal vector
+		\item Then update sphere intersection to calculate this information
+	\end{itemize}
+	\inputminted{python}{scripts/sphereIntersectionNormal.py}
 \end{frame}
 
 \begin{frame}[fragile]

@@ -14,5 +14,5 @@ class Sphere:
                 p = ray.at(solution)
                 normal = (p - self.center).normalize()
                 # Now we also have to update HitRecord
-                return HitRecord(p, normal, self.material, solution)
+                return HitRecord(p, self.material, solution, normal)
         return None

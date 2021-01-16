@@ -17,7 +17,7 @@ def solve_quadratic(a, b, c):
         return [min(b_minus, b_plus), max(b_minus, b_plus)]
 
 class HitRecord:
-    def __init__(self, point, normal, time, material):
+    def __init__(self, point, material, time, normal):
         self.point = point
         self.normal = normal
         self.time = time
@@ -39,7 +39,7 @@ class Sphere:
             if solution > 0:
                 p = ray.at(solution)
                 normal = (p - self.center).normalize()
-                return HitRecord(p, normal, solution, self.material)
+                return HitRecord(p, self.material, solution, normal)
         return None
 
 def get_background(ray):

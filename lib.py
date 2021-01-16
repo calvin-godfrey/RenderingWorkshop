@@ -12,6 +12,8 @@ class Vector3:
         return Vector3(self.x*s,self.y*s,self.z*s)
     def __truediv__(self, s):
         return Vector3(self.x/s,self.y/s,self.z/s)
+    def __neg__(self):
+        return self * -1
     def multiply(self, v): # Component-wise
         return Vector3(self.x*v.x,self.y*v.y,self.z*v.z)
     def length(self):
