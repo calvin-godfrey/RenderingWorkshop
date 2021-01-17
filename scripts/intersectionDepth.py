@@ -7,7 +7,7 @@ def get_intersection(ray, spheres, depth):
     # generate new ray direction
     direction = found_record.normal + rand_on_sphere()
     new_ray = Ray(found_record.point, direction)
-    # li term of render equation
+    # color of next bounce
     next_color = get_intersection(new_ray, spheres, depth - 1)
     current_color = found_record.color
     # This is compontent-wise multiplication
